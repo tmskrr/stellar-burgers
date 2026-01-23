@@ -41,7 +41,6 @@ export const orderSlice = createSlice({
 export const { orderRequest, orderSuccess, orderFailed, closeOrderModal } =
   orderSlice.actions;
 
-// thunk оформления заказа
 export const createOrder =
   (ingredients: string[]) => (dispatch: AppDispatch) => {
     dispatch(orderRequest());
