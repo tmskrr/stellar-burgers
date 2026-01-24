@@ -1,23 +1,23 @@
 import { FC, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
+import { useSelector } from '../../services/store';
+
 import { Preloader } from '../ui/preloader';
 import { OrderInfoUI } from '../ui/order-info';
 import { TIngredient } from '@utils-types';
 
 export const OrderInfo: FC = () => {
-  /** TODO: взять переменные orderData и ingredients из стора */
-  const orderData = {
-    createdAt: '',
-    ingredients: [],
-    _id: '',
-    status: '',
-    name: '',
-    updatedAt: 'string',
-    number: 0
-  };
+  const { number } = useParams();
 
-  const ingredients: TIngredient[] = [];
+  const ingredients = useSelector((state) => state.ingredients.items);
 
-  /* Готовим данные для отображения */
+  const ordersFromFeed = useSelector((state) => state.feed.orders);
+  const ordersFromProfile = useSelector((state) => state.profileOrders?.orders);
+
+  const orderData =
+    ordersFromFeed.find((order) => order.number === Number(number)) ||
+    ordersFromProfile?.find((order) => order.number === Number(number));
+
   const orderInfo = useMemo(() => {
     if (!orderData || !ingredients.length) return null;
 
@@ -28,17 +28,14 @@ export const OrderInfo: FC = () => {
     };
 
     const ingredientsInfo = orderData.ingredients.reduce(
-      (acc: TIngredientsWithCount, item) => {
-        if (!acc[item]) {
-          const ingredient = ingredients.find((ing) => ing._id === item);
-          if (ingredient) {
-            acc[item] = {
-              ...ingredient,
-              count: 1
-            };
-          }
+      (acc: TIngredientsWithCount, itemId) => {
+        const ingredient = ingredients.find((ing) => ing._id === itemId);
+        if (!ingredient) return acc;
+
+        if (!acc[itemId]) {
+          acc[itemId] = { ...ingredient, count: 1 };
         } else {
-          acc[item].count++;
+          acc[itemId].count++;
         }
 
         return acc;
@@ -47,7 +44,7 @@ export const OrderInfo: FC = () => {
     );
 
     const total = Object.values(ingredientsInfo).reduce(
-      (acc, item) => acc + item.price * item.count,
+      (sum, item) => sum + item.price * item.count,
       0
     );
 

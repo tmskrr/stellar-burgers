@@ -8,6 +8,7 @@ import {
   updateUserApi
 } from '../utils/burger-api';
 import type { AppDispatch } from '../services/store';
+import { setCookie } from '../utils/cookie';
 
 type TUserState = {
   user: TUser | null;
@@ -52,7 +53,6 @@ const userSlice = createSlice({
 export const { userRequest, userSuccess, userFailed, logoutSuccess } =
   userSlice.actions;
 
-// проверка авторизации при старте приложения
 export const checkUserAuth = () => (dispatch: AppDispatch) => {
   dispatch(userRequest());
 
@@ -65,29 +65,21 @@ export const checkUserAuth = () => (dispatch: AppDispatch) => {
     });
 };
 
-// логин
 export const loginUser =
   (email: string, password: string) => (dispatch: AppDispatch) => {
     dispatch(userRequest());
 
     loginUserApi({ email, password })
       .then((res) => {
+        localStorage.setItem('refreshToken', res.refreshToken);
+        setCookie('accessToken', res.accessToken);
+
         dispatch(userSuccess(res.user));
       })
       .catch((err) => {
         dispatch(userFailed(err?.message || 'Ошибка авторизации'));
       });
   };
-
-// логаут
-export const logoutUser = () => (dispatch: AppDispatch) => {
-  logoutApi().finally(() => {
-    localStorage.removeItem('refreshToken');
-    dispatch(logoutSuccess());
-  });
-};
-
-export default userSlice.reducer;
 
 export const registerUser =
   (name: string, email: string, password: string) =>
@@ -96,6 +88,9 @@ export const registerUser =
 
     registerUserApi({ name, email, password })
       .then((res) => {
+        localStorage.setItem('refreshToken', res.refreshToken);
+        setCookie('accessToken', res.accessToken);
+
         dispatch(userSuccess(res.user));
       })
       .catch((err) => {
@@ -116,3 +111,13 @@ export const updateUser =
         dispatch(userFailed(err?.message || 'Ошибка обновления профиля'));
       });
   };
+
+export const logoutUser = () => (dispatch: AppDispatch) => {
+  logoutApi().finally(() => {
+    localStorage.removeItem('refreshToken');
+    setCookie('accessToken', '');
+    dispatch(logoutSuccess());
+  });
+};
+
+export default userSlice.reducer;

@@ -17,7 +17,7 @@ export const ProtectedRoute = ({ onlyUnAuth }: Props) => {
     return <div>Загрузка...</div>;
   }
 
-  // страницы только для НЕавторизованных (login/register/forgot/reset)
+  // страницы только для неавторизованных
   if (onlyUnAuth && user) {
     return <Navigate to='/' replace />;
   }
