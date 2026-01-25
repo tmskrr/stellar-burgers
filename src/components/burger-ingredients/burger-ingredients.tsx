@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef, useState } from 'react';
+import { FC, useEffect, useRef, useState, useMemo } from 'react';
 import { useSelector } from '../../services/store';
 import { useInView } from 'react-intersection-observer';
 
@@ -6,28 +6,33 @@ import { TTabMode } from '@utils-types';
 import { BurgerIngredientsUI } from '@ui';
 
 export const BurgerIngredients: FC = () => {
-  // данные из стора
   const ingredients = useSelector((state) => state.ingredients.items);
 
-  // разбиваем ингредиенты по типам
-  const buns = ingredients.filter((item) => item.type === 'bun');
-  const mains = ingredients.filter((item) => item.type === 'main');
-  const sauces = ingredients.filter((item) => item.type === 'sauce');
+  const buns = useMemo(
+    () => ingredients.filter((item) => item.type === 'bun'),
+    [ingredients]
+  );
 
-  // текущая активная вкладка
+  const mains = useMemo(
+    () => ingredients.filter((item) => item.type === 'main'),
+    [ingredients]
+  );
+
+  const sauces = useMemo(
+    () => ingredients.filter((item) => item.type === 'sauce'),
+    [ingredients]
+  );
+
   const [currentTab, setCurrentTab] = useState<TTabMode>('bun');
 
-  // refs для скролла
   const titleBunRef = useRef<HTMLHeadingElement>(null);
   const titleMainRef = useRef<HTMLHeadingElement>(null);
   const titleSaucesRef = useRef<HTMLHeadingElement>(null);
 
-  // отслеживание видимости секций
   const [bunsRef, inViewBuns] = useInView({ threshold: 0 });
   const [mainsRef, inViewMains] = useInView({ threshold: 0 });
   const [saucesRef, inViewSauces] = useInView({ threshold: 0 });
 
-  // смена активного таба при скролле
   useEffect(() => {
     if (inViewBuns) {
       setCurrentTab('bun');
@@ -38,7 +43,6 @@ export const BurgerIngredients: FC = () => {
     }
   }, [inViewBuns, inViewMains, inViewSauces]);
 
-  // клик по табу, скролл к секции
   const onTabClick = (tab: string) => {
     const typedTab = tab as TTabMode;
     setCurrentTab(typedTab);
