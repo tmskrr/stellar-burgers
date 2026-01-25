@@ -1,7 +1,6 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getOrdersApi } from '../utils/burger-api';
 import { TOrder } from '@utils-types';
-import { AppDispatch } from '../services/store';
 
 type TProfileOrdersState = {
   orders: TOrder[];
@@ -15,41 +14,37 @@ const initialState: TProfileOrdersState = {
   error: null
 };
 
-const profileOrdersSlice = createSlice({
-  name: 'profileOrders',
-  initialState,
-  reducers: {
-    profileOrdersRequest: (state) => {
-      state.isLoading = true;
-      state.error = null;
-    },
-    profileOrdersSuccess: (state, action) => {
-      state.isLoading = false;
-      state.orders = action.payload;
-    },
-    profileOrdersFailed: (state, action) => {
-      state.isLoading = false;
-      state.error = action.payload;
-    }
+export const fetchProfileOrders = createAsyncThunk<
+  TOrder[],
+  void,
+  { rejectValue: string }
+>('profileOrders/fetchProfileOrders', async (_, thunkAPI) => {
+  try {
+    return await getOrdersApi();
+  } catch (err: any) {
+    return thunkAPI.rejectWithValue(err?.message || 'Ошибка загрузки заказов');
   }
 });
 
-export const {
-  profileOrdersRequest,
-  profileOrdersSuccess,
-  profileOrdersFailed
-} = profileOrdersSlice.actions;
-
-export const fetchProfileOrders = () => (dispatch: AppDispatch) => {
-  dispatch(profileOrdersRequest());
-
-  getOrdersApi()
-    .then((orders) => {
-      dispatch(profileOrdersSuccess(orders));
-    })
-    .catch((err) => {
-      dispatch(profileOrdersFailed(err?.message || 'Ошибка загрузки заказов'));
-    });
-};
+const profileOrdersSlice = createSlice({
+  name: 'profileOrders',
+  initialState,
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchProfileOrders.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchProfileOrders.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.orders = action.payload;
+      })
+      .addCase(fetchProfileOrders.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Ошибка загрузки заказов';
+      });
+  }
+});
 
 export default profileOrdersSlice.reducer;

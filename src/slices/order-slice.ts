@@ -1,6 +1,5 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { orderBurgerApi } from '../utils/burger-api';
-import { AppDispatch } from '../services/store';
 import { TOrder } from '../utils/types';
 import { clearConstructor } from './constructor-slice';
 
@@ -16,43 +15,46 @@ const initialState: TOrderState = {
   orderModalData: null
 };
 
-export const orderSlice = createSlice({
-  name: 'order',
-  initialState,
-  reducers: {
-    orderRequest: (state) => {
-      state.orderRequest = true;
-      state.orderError = null;
-    },
-    orderSuccess: (state, action: PayloadAction<TOrder>) => {
-      state.orderRequest = false;
-      state.orderModalData = action.payload;
-    },
-    orderFailed: (state, action: PayloadAction<string>) => {
-      state.orderRequest = false;
-      state.orderError = action.payload;
-    },
-    closeOrderModal: (state) => {
-      state.orderModalData = null;
-    }
+export const createOrder = createAsyncThunk<
+  TOrder,
+  string[],
+  { rejectValue: string }
+>('order/createOrder', async (ingredients, thunkAPI) => {
+  try {
+    const res = await orderBurgerApi(ingredients);
+
+    thunkAPI.dispatch(clearConstructor());
+
+    return res.order;
+  } catch (err: any) {
+    return thunkAPI.rejectWithValue(err?.message || 'Ошибка оформления заказа');
   }
 });
 
-export const { orderRequest, orderSuccess, orderFailed, closeOrderModal } =
-  orderSlice.actions;
-
-export const createOrder =
-  (ingredients: string[]) => (dispatch: AppDispatch) => {
-    dispatch(orderRequest());
-
-    orderBurgerApi(ingredients)
-      .then((res) => {
-        dispatch(orderSuccess(res.order));
-        dispatch(clearConstructor());
+const orderSlice = createSlice({
+  name: 'order',
+  initialState,
+  reducers: {
+    closeOrderModal: (state) => {
+      state.orderModalData = null;
+    }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(createOrder.pending, (state) => {
+        state.orderRequest = true;
+        state.orderError = null;
       })
-      .catch((err) => {
-        dispatch(orderFailed(err?.message || 'Ошибка оформления заказа'));
+      .addCase(createOrder.fulfilled, (state, action) => {
+        state.orderRequest = false;
+        state.orderModalData = action.payload;
+      })
+      .addCase(createOrder.rejected, (state, action) => {
+        state.orderRequest = false;
+        state.orderError = action.payload || 'Ошибка оформления заказа';
       });
-  };
+  }
+});
 
+export const { closeOrderModal } = orderSlice.actions;
 export default orderSlice.reducer;

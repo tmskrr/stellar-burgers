@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-
+import { fetchIngredients } from '../../slices/ingredients-slice';
 import { AppHeader, Modal, ProtectedRoute } from '@components';
 import {
   ConstructorPage,
@@ -27,6 +27,7 @@ const App = () => {
 
   useEffect(() => {
     dispatch(checkUserAuth());
+    dispatch(fetchIngredients());
   }, [dispatch]);
 
   const location = useLocation();

@@ -1,7 +1,6 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getFeedsApi } from '../utils/burger-api';
 import { TOrder } from '@utils-types';
-import { AppDispatch } from '../services/store';
 
 type TFeedState = {
   orders: TOrder[];
@@ -19,39 +18,32 @@ const initialState: TFeedState = {
   error: null
 };
 
+export const fetchFeed = createAsyncThunk('feed/fetchFeed', async () => {
+  const data = await getFeedsApi();
+  return data;
+});
+
 const feedSlice = createSlice({
   name: 'feed',
   initialState,
-  reducers: {
-    feedRequest: (state) => {
-      state.isLoading = true;
-      state.error = null;
-    },
-    feedSuccess: (state, action) => {
-      state.isLoading = false;
-      state.orders = action.payload.orders;
-      state.total = action.payload.total;
-      state.totalToday = action.payload.totalToday;
-    },
-    feedFailed: (state, action) => {
-      state.isLoading = false;
-      state.error = action.payload;
-    }
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchFeed.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchFeed.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.orders = action.payload.orders;
+        state.total = action.payload.total;
+        state.totalToday = action.payload.totalToday;
+      })
+      .addCase(fetchFeed.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error.message || 'Ошибка загрузки ленты';
+      });
   }
 });
-
-export const { feedRequest, feedSuccess, feedFailed } = feedSlice.actions;
-
-export const fetchFeed = () => (dispatch: AppDispatch) => {
-  dispatch(feedRequest());
-
-  getFeedsApi()
-    .then((data) => {
-      dispatch(feedSuccess(data));
-    })
-    .catch((err) => {
-      dispatch(feedFailed(err?.message || 'Ошибка загрузки ленты'));
-    });
-};
 
 export default feedSlice.reducer;

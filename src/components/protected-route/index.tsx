@@ -1,6 +1,5 @@
-import { useLocation, Navigate, Outlet } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import type { RootState } from '../../services/store';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useSelector } from '../../services/store';
 
 type Props = {
   onlyUnAuth?: boolean;
@@ -8,18 +7,17 @@ type Props = {
 
 export const ProtectedRoute = ({ onlyUnAuth }: Props) => {
   const location = useLocation();
-  const { user, isInit, isLoading } = useSelector(
-    (state: RootState) => state.user
-  );
+  const { user, isInit, isLoading } = useSelector((state) => state.user);
 
-  // ждём, пока проверим авторизацию (checkUserAuth)
+  // ждём проверки авторизации
   if (!isInit || isLoading) {
     return <div>Загрузка...</div>;
   }
 
   // страницы только для неавторизованных
   if (onlyUnAuth && user) {
-    return <Navigate to='/' replace />;
+    const { from } = location.state || { from: { pathname: '/' } };
+    return <Navigate to={from.pathname} replace />;
   }
 
   // страницы только для авторизованных
