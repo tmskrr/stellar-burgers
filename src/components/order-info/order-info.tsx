@@ -1,10 +1,11 @@
-import { FC, useMemo } from 'react';
+import { FC, useMemo, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSelector } from '../../services/store';
 
 import { Preloader } from '../ui/preloader';
 import { OrderInfoUI } from '../ui/order-info';
-import { TIngredient } from '@utils-types';
+import { TIngredient, TOrder } from '@utils-types';
+import { getOrderByNumberApi } from '../../utils/burger-api';
 
 export const OrderInfo: FC = () => {
   const { number } = useParams();
@@ -14,20 +15,42 @@ export const OrderInfo: FC = () => {
   const ordersFromFeed = useSelector((state) => state.feed.orders);
   const ordersFromProfile = useSelector((state) => state.profileOrders?.orders);
 
-  const orderData =
+  const orderFromStore =
     ordersFromFeed.find((order) => order.number === Number(number)) ||
     ordersFromProfile?.find((order) => order.number === Number(number));
 
-  const orderInfo = useMemo(() => {
-    if (!orderData || !ingredients.length) return null;
+  const [orderFromApi, setOrderFromApi] = useState<TOrder | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-    const date = new Date(orderData.createdAt);
+  useEffect(() => {
+    if (!number || orderFromStore) return;
+
+    const orderNumber = Number(number);
+    if (Number.isNaN(orderNumber)) return;
+
+    setIsLoading(true);
+
+    getOrderByNumberApi(orderNumber)
+      .then((res) => {
+        setOrderFromApi(res.orders[0]);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [number, orderFromStore]);
+
+  const actualOrder = orderFromStore || orderFromApi;
+
+  const orderInfo = useMemo(() => {
+    if (!actualOrder || !ingredients.length) return null;
+
+    const date = new Date(actualOrder.createdAt);
 
     type TIngredientsWithCount = {
       [key: string]: TIngredient & { count: number };
     };
 
-    const ingredientsInfo = orderData.ingredients.reduce(
+    const ingredientsInfo = actualOrder.ingredients.reduce(
       (acc: TIngredientsWithCount, itemId) => {
         const ingredient = ingredients.find((ing) => ing._id === itemId);
         if (!ingredient) return acc;
@@ -49,14 +72,14 @@ export const OrderInfo: FC = () => {
     );
 
     return {
-      ...orderData,
+      ...actualOrder,
       ingredientsInfo,
       date,
       total
     };
-  }, [orderData, ingredients]);
+  }, [actualOrder, ingredients]);
 
-  if (!orderInfo) {
+  if (isLoading || !orderInfo) {
     return <Preloader />;
   }
 

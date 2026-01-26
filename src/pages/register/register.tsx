@@ -12,7 +12,14 @@ export const Register: FC = () => {
 
   const handleSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
-    dispatch(registerUser(userName, email, password));
+
+    dispatch(
+      registerUser({
+        name: userName,
+        email,
+        password
+      })
+    );
   };
 
   return (

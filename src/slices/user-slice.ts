@@ -1,4 +1,4 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { TUser } from '../utils/types';
 import {
   getUserApi,
@@ -7,7 +7,6 @@ import {
   registerUserApi,
   updateUserApi
 } from '../utils/burger-api';
-import type { AppDispatch } from '../services/store';
 import { setCookie } from '../utils/cookie';
 
 type TUserState = {
@@ -24,100 +23,149 @@ const initialState: TUserState = {
   error: null
 };
 
-const userSlice = createSlice({
-  name: 'user',
-  initialState,
-  reducers: {
-    userRequest: (state) => {
-      state.isLoading = true;
-      state.error = null;
-    },
-    userSuccess: (state, action: { payload: TUser }) => {
-      state.isLoading = false;
-      state.isInit = true;
-      state.user = action.payload;
-    },
-    userFailed: (state, action?: { payload?: string }) => {
-      state.isLoading = false;
-      state.isInit = true;
-      state.user = null;
-      state.error = action?.payload || null;
-    },
-    logoutSuccess: (state) => {
-      state.user = null;
-      state.isInit = true;
-    }
+// проверка авторизации при старте приложения
+export const checkUserAuth = createAsyncThunk<
+  TUser,
+  void,
+  { rejectValue: string }
+>('user/checkAuth', async (_, thunkAPI) => {
+  try {
+    const res = await getUserApi();
+    return res.user;
+  } catch {
+    return thunkAPI.rejectWithValue('Пользователь не авторизован');
   }
 });
 
-export const { userRequest, userSuccess, userFailed, logoutSuccess } =
-  userSlice.actions;
+// логин
+export const loginUser = createAsyncThunk<
+  TUser,
+  { email: string; password: string },
+  { rejectValue: string }
+>('user/login', async ({ email, password }, thunkAPI) => {
+  try {
+    const res = await loginUserApi({ email, password });
 
-export const checkUserAuth = () => (dispatch: AppDispatch) => {
-  dispatch(userRequest());
+    localStorage.setItem('refreshToken', res.refreshToken);
+    setCookie('accessToken', res.accessToken);
 
-  getUserApi()
-    .then((res) => {
-      dispatch(userSuccess(res.user));
-    })
-    .catch(() => {
-      dispatch(userFailed());
-    });
-};
+    return res.user;
+  } catch (err: any) {
+    return thunkAPI.rejectWithValue(err?.message || 'Ошибка авторизации');
+  }
+});
 
-export const loginUser =
-  (email: string, password: string) => (dispatch: AppDispatch) => {
-    dispatch(userRequest());
+// регистрация
+export const registerUser = createAsyncThunk<
+  TUser,
+  { name: string; email: string; password: string },
+  { rejectValue: string }
+>('user/register', async ({ name, email, password }, thunkAPI) => {
+  try {
+    const res = await registerUserApi({ name, email, password });
 
-    loginUserApi({ email, password })
-      .then((res) => {
-        localStorage.setItem('refreshToken', res.refreshToken);
-        setCookie('accessToken', res.accessToken);
+    localStorage.setItem('refreshToken', res.refreshToken);
+    setCookie('accessToken', res.accessToken);
 
-        dispatch(userSuccess(res.user));
+    return res.user;
+  } catch (err: any) {
+    return thunkAPI.rejectWithValue(err?.message || 'Ошибка регистрации');
+  }
+});
+
+// обновление профиля
+export const updateUser = createAsyncThunk<
+  TUser,
+  { name: string; email: string; password?: string },
+  { rejectValue: string }
+>('user/update', async (data, thunkAPI) => {
+  try {
+    const res = await updateUserApi(data);
+    return res.user;
+  } catch (err: any) {
+    return thunkAPI.rejectWithValue(
+      err?.message || 'Ошибка обновления профиля'
+    );
+  }
+});
+
+// логаут
+export const logoutUser = createAsyncThunk('user/logout', async () => {
+  await logoutApi();
+  localStorage.removeItem('refreshToken');
+  setCookie('accessToken', '');
+});
+
+const userSlice = createSlice({
+  name: 'user',
+  initialState,
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+
+      // check auth
+      .addCase(checkUserAuth.pending, (state) => {
+        state.isLoading = true;
       })
-      .catch((err) => {
-        dispatch(userFailed(err?.message || 'Ошибка авторизации'));
-      });
-  };
-
-export const registerUser =
-  (name: string, email: string, password: string) =>
-  (dispatch: AppDispatch) => {
-    dispatch(userRequest());
-
-    registerUserApi({ name, email, password })
-      .then((res) => {
-        localStorage.setItem('refreshToken', res.refreshToken);
-        setCookie('accessToken', res.accessToken);
-
-        dispatch(userSuccess(res.user));
+      .addCase(checkUserAuth.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isInit = true;
+        state.user = action.payload;
       })
-      .catch((err) => {
-        dispatch(userFailed(err?.message || 'Ошибка регистрации'));
-      });
-  };
-
-export const updateUser =
-  (data: { name: string; email: string; password?: string }) =>
-  (dispatch: AppDispatch) => {
-    dispatch(userRequest());
-
-    updateUserApi(data)
-      .then((res) => {
-        dispatch(userSuccess(res.user));
+      .addCase(checkUserAuth.rejected, (state) => {
+        state.isLoading = false;
+        state.isInit = true;
+        state.user = null;
       })
-      .catch((err) => {
-        dispatch(userFailed(err?.message || 'Ошибка обновления профиля'));
-      });
-  };
 
-export const logoutUser = () => (dispatch: AppDispatch) => {
-  logoutApi().finally(() => {
-    localStorage.removeItem('refreshToken');
-    setCookie('accessToken', '');
-    dispatch(logoutSuccess());
-  });
-};
+      // login
+      .addCase(loginUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || null;
+      })
+
+      // register
+      .addCase(registerUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || null;
+      })
+
+      // update
+      .addCase(updateUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+      })
+      .addCase(updateUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || null;
+      })
+
+      // logout
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.user = null;
+        state.isInit = true;
+      });
+  }
+});
 
 export default userSlice.reducer;
