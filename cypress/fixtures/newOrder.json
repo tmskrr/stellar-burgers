@@ -1,0 +1,91 @@
+{
+  "success": true,
+  "name": "Минеральный фалленианский метеоритный флюоресцентный бургер",
+  "order": {
+    "ingredients": [
+      {
+        "_id": "643d69a5c3f7b9001cfa093d",
+        "name": "Флюоресцентная булка R2-D3",
+        "type": "bun",
+        "proteins": 44,
+        "fat": 26,
+        "carbohydrates": 85,
+        "calories": 643,
+        "price": 988,
+        "image": "https://code.s3.yandex.net/react/code/bun-01.png",
+        "image_mobile": "https://code.s3.yandex.net/react/code/bun-01-mobile.png",
+        "image_large": "https://code.s3.yandex.net/react/code/bun-01-large.png",
+        "__v": 0
+      },
+      {
+        "_id": "643d69a5c3f7b9001cfa0940",
+        "name": "Говяжий метеорит (отбивная)",
+        "type": "main",
+        "proteins": 800,
+        "fat": 800,
+        "carbohydrates": 300,
+        "calories": 2674,
+        "price": 3000,
+        "image": "https://code.s3.yandex.net/react/code/meat-04.png",
+        "image_mobile": "https://code.s3.yandex.net/react/code/meat-04-mobile.png",
+        "image_large": "https://code.s3.yandex.net/react/code/meat-04-large.png",
+        "__v": 0
+      },
+      {
+        "_id": "643d69a5c3f7b9001cfa0947",
+        "name": "Плоды Фалленианского дерева",
+        "type": "main",
+        "proteins": 20,
+        "fat": 5,
+        "carbohydrates": 55,
+        "calories": 77,
+        "price": 874,
+        "image": "https://code.s3.yandex.net/react/code/sp_1.png",
+        "image_mobile": "https://code.s3.yandex.net/react/code/sp_1-mobile.png",
+        "image_large": "https://code.s3.yandex.net/react/code/sp_1-large.png",
+        "__v": 0
+      },
+      {
+        "_id": "643d69a5c3f7b9001cfa0946",
+        "name": "Хрустящие минеральные кольца",
+        "type": "main",
+        "proteins": 808,
+        "fat": 689,
+        "carbohydrates": 609,
+        "calories": 986,
+        "price": 300,
+        "image": "https://code.s3.yandex.net/react/code/mineral_rings.png",
+        "image_mobile": "https://code.s3.yandex.net/react/code/mineral_rings-mobile.png",
+        "image_large": "https://code.s3.yandex.net/react/code/mineral_rings-large.png",
+        "__v": 0
+      },
+      {
+        "_id": "643d69a5c3f7b9001cfa093d",
+        "name": "Флюоресцентная булка R2-D3",
+        "type": "bun",
+        "proteins": 44,
+        "fat": 26,
+        "carbohydrates": 85,
+        "calories": 643,
+        "price": 988,
+        "image": "https://code.s3.yandex.net/react/code/bun-01.png",
+        "image_mobile": "https://code.s3.yandex.net/react/code/bun-01-mobile.png",
+        "image_large": "https://code.s3.yandex.net/react/code/bun-01-large.png",
+        "__v": 0
+      }
+    ],
+    "_id": "6992a954a64177001b32c16e",
+    "owner": {
+      "name": "marqo",
+      "email": "mar@mail.ru",
+      "createdAt": "2026-01-23T10:47:09.219Z",
+      "updatedAt": "2026-01-24T06:58:42.770Z"
+    },
+    "status": "done",
+    "name": "Минеральный фалленианский метеоритный флюоресцентный бургер",
+    "createdAt": "2026-02-16T05:21:24.748Z",
+    "updatedAt": "2026-02-16T05:21:24.960Z",
+    "number": 101028,
+    "price": 6150
+  }
+}
